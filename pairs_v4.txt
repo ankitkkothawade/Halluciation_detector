@@ -1,0 +1,713 @@
+=== 1. Rows labelled hallucinated (76) ===
+
+#18 [column_order] db=world_1
+  Q:    What are the names of countries that speak more than 2 languages, as well as how many languages they speak?
+  GOLD: SELECT COUNT(T2.Language) , T1.Name FROM country AS T1 JOIN countrylanguage AS T2 ON T1.Code = T2.CountryCode GROUP BY T1.Name HAVING COUNT(*) > 2
+  GEN:  SELECT c.Name, COUNT(cl.Language) AS language_count FROM country c JOIN countrylanguage cl ON c.Code = cl.CountryCode GROUP BY c.Code, c.Name HAVING COUNT(cl.Language) > 2;
+  gold -> 149 row(s) [(5, 'Afghanistan'), (3, 'Albania'), (3, 'American Samoa')]
+  gen  -> 149 row(s) [('Aruba', 4), ('Afghanistan', 5), ('Angola', 9)]
+
+#92 [column_order] db=pets_1
+  Q:    List the maximum weight and type for each type of pet.
+  GOLD: SELECT max(weight) , petType FROM pets GROUP BY petType
+  GEN:  SELECT PetType, MAX(weight) AS max_weight FROM Pets GROUP BY PetType;
+  gold -> 2 row(s) [(12.0, 'cat'), (13.4, 'dog')]
+  gen  -> 2 row(s) [('cat', 12.0), ('dog', 13.4)]
+
+#101 [column_order] db=pets_1
+  Q:    Find the number of pets for each student who has any pet and student id.
+  GOLD: SELECT count(*) , T1.stuid FROM student AS T1 JOIN has_pet AS T2 ON T1.stuid = T2.stuid GROUP BY T1.stuid
+  GEN:  SELECT h.StuID, COUNT(*) AS pet_count FROM Has_Pet h GROUP BY h.StuID;
+  gold -> 2 row(s) [(1, 1001), (2, 1002)]
+  gen  -> 2 row(s) [(1001, 1), (1002, 2)]
+
+#108 [column_order] db=employee_hire_evaluation
+  Q:    Count the number of employees for each city.
+  GOLD: SELECT count(*) , city FROM employee GROUP BY city
+  GEN:  SELECT City, COUNT(*) AS employee_count FROM employee GROUP BY City;
+  gold -> 5 row(s) [(3, 'Bath'), (3, 'Bristol'), (1, 'Leicester')]
+  gen  -> 5 row(s) [('Bath', 3), ('Bristol', 3), ('Leicester', 1)]
+
+#111 [column_order] db=world_1
+  Q:    What are the different continents and the total popuation and average life expectancy corresponding to each, for continents that have an average life expectancy less than 72?
+  GOLD: SELECT sum(Population) , avg(LifeExpectancy) , Continent FROM country GROUP BY Continent HAVING avg(LifeExpectancy) < 72
+  GEN:  SELECT Continent, SUM(Population) AS total_population, AVG(LifeExpectancy) AS avg_life_expectancy FROM country GROUP BY Continent HAVING AVG(LifeExpectancy) < 72;
+  gold -> 4 row(s) [(784475000, 52.5719298245614, 'Africa'), (3705025700, 67.44117647058823, 'Asia'), (30401150, 69.715, 'Oceania')]
+  gen  -> 4 row(s) [('Africa', 784475000, 52.5719298245614), ('Asia', 3705025700, 67.44117647058823), ('Oceania', 30401150, 69.715)]
+
+#115 [column_order] db=student_transcripts_tracking
+  Q:    How many times at most can a course enrollment result show in different transcripts? Also show the course enrollment id.
+  GOLD: SELECT count(*) , student_course_id FROM Transcript_Contents GROUP BY student_course_id ORDER BY count(*) DESC LIMIT 1
+  GEN:  WITH counts AS ( SELECT student_course_id, COUNT(DISTINCT transcript_id) AS transcript_count FROM Transcript_Contents GROUP BY student_course_id ), max_cnt AS ( SELECT MAX(transcript_count) AS max_transcript_count FROM counts ) SELECT c.student_course_id, c.transcript_count FROM counts c JOIN max_cnt m ON c.transcript_count = m.max_transcript_count;
+  gold -> 1 row(s) [(4, 0)]
+  gen  -> 1 row(s) [(0, 4)]
+
+#154 [column_order] db=wta_1
+  Q:    How many players are there for each hand type?
+  GOLD: SELECT count(*) , hand FROM players GROUP BY hand
+  GEN:  SELECT hand, COUNT(*) AS player_count FROM players GROUP BY hand;
+  gold -> 4 row(s) [(954, ''), (487, 'L'), (5028, 'R')]
+  gen  -> 4 row(s) [('', 954), ('L', 487), ('R', 5028)]
+
+#157 [column_order] db=world_1
+  Q:    What region does Angola belong to and what is its population?
+  GOLD: SELECT Population , Region FROM country WHERE Name = "Angola"
+  GEN:  SELECT Region, Population FROM country WHERE Name = 'Angola';
+  gold -> 1 row(s) [(12878000, 'Central Africa')]
+  gen  -> 1 row(s) [('Central Africa', 12878000)]
+
+#159 [column_order] db=student_transcripts_tracking
+  Q:    What is the name and id of the department with the most number of degrees ?
+  GOLD: select t2.department_name , t1.department_id from degree_programs as t1 join departments as t2 on t1.department_id = t2.department_id group by t1.department_id order by count(*) desc limit 1
+  GEN:  SELECT d.department_id, d.department_name FROM Departments d JOIN Degree_Programs dp ON dp.department_id = d.department_id GROUP BY d.department_id, d.department_name ORDER BY COUNT(*) DESC LIMIT 1;
+  gold -> 1 row(s) [('statistics', 8)]
+  gen  -> 1 row(s) [(8, 'statistics')]
+
+#176 [column_order] db=wta_1
+  Q:    find the names of loser and winner who played in the match with greatest number of minutes.
+  GOLD: SELECT winner_name , loser_name FROM matches ORDER BY minutes DESC LIMIT 1
+  GEN:  SELECT loser_name, winner_name FROM matches WHERE minutes = (SELECT MAX(minutes) FROM matches);
+  gold -> 1 row(s) [('Petra Kvitova', 'Angelique Kerber')]
+  gen  -> 1 row(s) [('Angelique Kerber', 'Petra Kvitova')]
+
+#182 [column_order] db=world_1
+  Q:    Find the government form name and total population for each government form whose average life expectancy is longer than 72.
+  GOLD: SELECT sum(Population) , GovernmentForm FROM country GROUP BY GovernmentForm HAVING avg(LifeExpectancy) > 72
+  GEN:  SELECT GovernmentForm, SUM(Population) AS TotalPopulation FROM country GROUP BY GovernmentForm HAVING AVG(LifeExpectancy) > 72;
+  gold -> 17 row(s) [(3947000, 'Commonwealth of the US'), (1972000, 'Constitutional Monarchy (Emirate)'), (82516000, 'Constitutional Monarchy, Federation')]
+  gen  -> 17 row(s) [('Commonwealth of the US', 3947000), ('Constitutional Monarchy (Emirate)', 1972000), ('Constitutional Monarchy, Federation', 82516000)]
+
+#185 [column_order] db=student_transcripts_tracking
+  Q:    Which department offers the most number of degrees? List department name and id.
+  GOLD: SELECT T2.department_name , T1.department_id FROM Degree_Programs AS T1 JOIN Departments AS T2 ON T1.department_id = T2.department_id GROUP BY T1.department_id ORDER BY count(*) DESC LIMIT 1
+  GEN:  SELECT d.department_id, d.department_name FROM Departments d JOIN Degree_Programs dp ON dp.department_id = d.department_id GROUP BY d.department_id, d.department_name ORDER BY COUNT(dp.degree_program_id) DESC LIMIT 1;
+  gold -> 1 row(s) [('statistics', 8)]
+  gen  -> 1 row(s) [(8, 'statistics')]
+
+#187 [column_order] db=wta_1
+  Q:    Find the number of players for each hand type.
+  GOLD: SELECT count(*) , hand FROM players GROUP BY hand
+  GEN:  SELECT hand, COUNT(*) AS player_count FROM players GROUP BY hand;
+  gold -> 4 row(s) [(954, ''), (487, 'L'), (5028, 'R')]
+  gen  -> 4 row(s) [('', 954), ('L', 487), ('R', 5028)]
+
+#201 [column_order] db=car_1
+  Q:    What is the maximum accelerate for different number of cylinders?
+  GOLD: SELECT max(Accelerate) , Cylinders FROM CARS_DATA GROUP BY Cylinders;
+  GEN:  SELECT Cylinders, MAX(Accelerate) AS max_accelerate FROM cars_data GROUP BY Cylinders;
+  gold -> 5 row(s) [(13.5, 3), (24.8, 4), (20.1, 5)]
+  gen  -> 5 row(s) [(3, 13.5), (4, 24.8), (5, 20.1)]
+
+#206 [column_order] db=car_1
+  Q:    What is the maximum accelerate for all the different cylinders?
+  GOLD: SELECT max(Accelerate) , Cylinders FROM CARS_DATA GROUP BY Cylinders;
+  GEN:  SELECT Cylinders, MAX(Accelerate) AS max_accelerate FROM cars_data GROUP BY Cylinders;
+  gold -> 5 row(s) [(13.5, 3), (24.8, 4), (20.1, 5)]
+  gen  -> 5 row(s) [(3, 13.5), (4, 24.8), (5, 20.1)]
+
+#220 [column_order] db=tvshow
+  Q:    Find the number of cartoons directed by each of the listed directors.
+  GOLD: SELECT count(*) , Directed_by FROM cartoon GROUP BY Directed_by
+  GEN:  SELECT Directed_by, COUNT(*) AS cartoon_count FROM Cartoon GROUP BY Directed_by;
+  gold -> 3 row(s) [(4, 'Ben Jones'), (4, 'Brandon Vietti'), (4, 'Michael Chang')]
+  gen  -> 3 row(s) [('Ben Jones', 4), ('Brandon Vietti', 4), ('Michael Chang', 4)]
+
+#248 [column_order] db=tvshow
+  Q:    What is minimum and maximum share of TV series?
+  GOLD: SELECT max(SHARE) , min(SHARE) FROM TV_series;
+  GEN:  SELECT MIN(Share) AS min_share, MAX(Share) AS max_share FROM TV_series;
+  gold -> 1 row(s) [(9.0, 5.0)]
+  gen  -> 1 row(s) [(5.0, 9.0)]
+
+#250 [column_order] db=car_1
+  Q:    What are the names and ids of all countries with at least one car maker?
+  GOLD: SELECT T1.CountryName , T1.CountryId FROM COUNTRIES AS T1 JOIN CAR_MAKERS AS T2 ON T1.CountryId = T2.Country GROUP BY T1.CountryId HAVING count(*) >= 1;
+  GEN:  SELECT DISTINCT c.CountryId, c.CountryName FROM countries c JOIN car_makers cm ON cm.Country = c.CountryId;
+  gold -> 8 row(s) [('usa', 1), ('germany', 2), ('france', 3)]
+  gen  -> 8 row(s) [(1, 'usa'), (2, 'germany'), (3, 'france')]
+
+#254 [column_order] db=wta_1
+  Q:    How many players are from each country?
+  GOLD: SELECT count(*) , country_code FROM players GROUP BY country_code
+  GEN:  SELECT country_code, COUNT(*) AS player_count FROM players GROUP BY country_code;
+  gold -> 153 row(s) [(6, 'AHO'), (2, 'ALB'), (63, 'ALG')]
+  gen  -> 153 row(s) [('AHO', 6), ('ALB', 2), ('ALG', 63)]
+
+#282 [column_order] db=employee_hire_evaluation
+  Q:    What is the number of employees from each city?
+  GOLD: SELECT count(*) , city FROM employee GROUP BY city
+  GEN:  SELECT "City", COUNT(*) AS "employee_count" FROM "employee" GROUP BY "City";
+  gold -> 5 row(s) [(3, 'Bath'), (3, 'Bristol'), (1, 'Leicester')]
+  gen  -> 5 row(s) [('Bath', 3), ('Bristol', 3), ('Leicester', 1)]
+
+#19 [different_column_count] db=pets_1
+  Q:    What is the first name of every student who has a dog but does not have a cat?
+  GOLD: SELECT T1.fname , T1.age FROM student AS T1 JOIN has_pet AS T2 ON T1.stuid = T2.stuid JOIN pets AS T3 ON T3.petid = T2.petid WHERE T3.pettype = 'dog' AND T1.stuid NOT IN (SELECT T1.stuid FROM student AS T1 JOIN has_pet AS T2 ON T1.stuid = T2.stuid JOIN pets AS T3 ON T3.petid = T2.petid WHERE T3.pettype = 'cat')
+  GEN:  SELECT s.Fname FROM Student s WHERE EXISTS ( SELECT 1 FROM Has_Pet hp JOIN Pets p ON hp.PetID = p.PetID WHERE hp.StuID = s.StuID AND p.PetType = 'dog' ) AND NOT EXISTS ( SELECT 1 FROM Has_Pet hp JOIN Pets p ON hp.PetID = p.PetID WHERE hp.StuID = s.StuID AND p.PetType = 'cat' );
+  gold -> 2 row(s) [('Tracy', 19), ('Tracy', 19)]
+  gen  -> 1 row(s) [('Tracy',)]
+
+#25 [different_column_count] db=student_transcripts_tracking
+  Q:    Describe the section h.
+  GOLD: SELECT section_description FROM Sections WHERE section_name = 'h'
+  GEN:  SELECT section_id, course_id, section_name, section_description, other_details FROM Sections WHERE section_name = 'h';
+  gold -> 1 row(s) [('et',)]
+  gen  -> 1 row(s) [(8, 14, 'h', 'et', None)]
+
+#91 [different_column_count] db=world_1
+  Q:    What is the language spoken by the largest percentage of people in each country?
+  GOLD: SELECT LANGUAGE , CountryCode , max(Percentage) FROM countrylanguage GROUP BY CountryCode
+  GEN:  SELECT cl.CountryCode, c.Name AS CountryName, cl.Language, cl.Percentage FROM ( SELECT CountryCode, Language, Percentage, RANK() OVER (PARTITION BY CountryCode ORDER BY Percentage DESC) AS rnk FROM countrylanguage ) cl JOIN country c ON c.Code = cl.CountryCode WHERE cl.rnk = 1;
+  gold -> 233 row(s) [('Papiamento', 'ABW', 76.7), ('Pashto', 'AFG', 52.4), ('Ovimbundu', 'AGO', 37.2)]
+  gen  -> 241 row(s) [('ABW', 'Aruba', 'Papiamento', 76.7), ('AFG', 'Afghanistan', 'Pashto', 52.4), ('AGO', 'Angola', 'Ovimbundu', 37.2)]
+
+#94 [different_column_count] db=flight_2
+  Q:    Find all airlines that have at least 10 flights.
+  GOLD: SELECT T1.Airline FROM AIRLINES AS T1 JOIN FLIGHTS AS T2 ON T1.uid = T2.Airline GROUP BY T1.Airline HAVING count(*) > 10
+  GEN:  SELECT a.uid, a.Airline, a.Abbreviation, a.Country FROM airlines a JOIN flights f ON a.uid = f.Airline GROUP BY a.uid, a.Airline, a.Abbreviation, a.Country HAVING COUNT(*) >= 10;
+  gold -> 12 row(s) [('AirTran Airways',), ('Allegiant Air',), ('American Airlines',)]
+  gen  -> 12 row(s) [(1, 'United Airlines', 'UAL', 'USA'), (2, 'US Airways', 'USAir', 'USA'), (3, 'Delta Airlines', 'Delta', 'USA')]
+
+#124 [different_column_count] db=battle_death
+  Q:    List the name, date and result of each battle.
+  GOLD: SELECT name , date FROM battle
+  GEN:  SELECT name, date, result FROM battle;
+  gold -> 8 row(s) [('Battle of Adrianople', '14 April 1205'), ('Battle of Serres', 'June 1205'), ('Battle of Rusion', '31 January 1206')]
+  gen  -> 8 row(s) [('Battle of Adrianople', '14 April 1205', 'Bulgarian victory'), ('Battle of Serres', 'June 1205', 'Bulgarian victory'), ('Battle of Rusion', '31 January 1206', 'Bulga...
+
+#125 [different_column_count] db=student_transcripts_tracking
+  Q:    List all the student details in reversed lexicographical order.
+  GOLD: SELECT other_student_details FROM Students ORDER BY other_student_details DESC
+  GEN:  SELECT * FROM Students ORDER BY last_name DESC, first_name DESC, middle_name DESC, student_id DESC;
+  gold -> 15 row(s) [('voluptatem',), ('rerum',), ('quia',)]
+  gen  -> 15 row(s) [(13, 9, 8, 'Deon', 'Brooklyn', 'Weimann', '(213)445-0399x85208', 'jhuel@example.com', '68095', '1986-02-24 21:12:23', '2014-05-30 23:32:02', 'assumenda'), (1, 10, 15,...
+
+#133 [different_column_count] db=world_1
+  Q:    What is the total number of countries where Spanish is spoken by the largest percentage of people?
+  GOLD: SELECT count(*) , max(Percentage) FROM countrylanguage WHERE LANGUAGE = "Spanish" GROUP BY CountryCode
+  GEN:  SELECT COUNT(DISTINCT cl.CountryCode) FROM countrylanguage cl JOIN ( SELECT CountryCode, MAX(Percentage) AS maxperc FROM countrylanguage GROUP BY CountryCode ) m ON cl.CountryCode = m.CountryCode AND cl.Percentage = m.maxperc WHERE cl.Language = 'Spanish';
+  gold -> 28 row(s) [(1, 7.4), (1, 44.6), (1, 96.8)]
+  gen  -> 1 row(s) [(21,)]
+
+#142 [different_column_count] db=tvshow
+  Q:    List all cartoon directed by "Ben Jones".
+  GOLD: SELECT Title FROM Cartoon WHERE Directed_by = "Ben Jones";
+  GEN:  SELECT * FROM Cartoon WHERE Directed_by = 'Ben Jones';
+  gold -> 4 row(s) [('The Rise of the Blue Beetle!',), ('Day of the Dark Knight!',), ('Dawn of the Dead Man!',)]
+  gen  -> 4 row(s) [(1.0, 'The Rise of the Blue Beetle!', 'Ben Jones', 'Michael Jelenic', 'November14,2008', 101.0, '700'), (4.0, 'Day of the Dark Knight!', 'Ben Jones', 'J. M. DeMatteis...
+
+#219 [different_column_count] db=wta_1
+  Q:    What are the full names of all left handed players, in order of birth date?
+  GOLD: SELECT first_name , last_name FROM players WHERE hand = 'L' ORDER BY birth_date
+  GEN:  SELECT first_name || ' ' || last_name AS full_name FROM players WHERE hand = 'L' ORDER BY birth_date;
+  gold -> 487 row(s) [('Ann', 'Jones'), ('Wendy', 'Gilchrist'), ('Martina', 'Navratilova')]
+  gen  -> 487 row(s) [('Ann Jones',), ('Wendy Gilchrist',), ('Martina Navratilova',)]
+
+#221 [different_column_count] db=flight_2
+  Q:    Which airports do not have departing or arriving flights?
+  GOLD: SELECT AirportName FROM Airports WHERE AirportCode NOT IN (SELECT SourceAirport FROM Flights UNION SELECT DestAirport FROM Flights)
+  GEN:  SELECT AirportCode, AirportName, City FROM airports a WHERE NOT EXISTS (SELECT 1 FROM flights f WHERE f.SourceAirport = a.AirportCode) AND NOT EXISTS (SELECT 1 FROM flights f WHERE f.DestAirport = a.AirportCode);
+  gold -> 100 row(s) [('Phillips AAF ',), ('Municipal ',), ('Dyess AFB ',)]
+  gen  -> 100 row(s) [('APG', 'Phillips AAF ', 'Aberdeen '), ('ABR', 'Municipal ', 'Aberdeen '), ('DYS', 'Dyess AFB ', 'Abilene ')]
+
+#235 [different_column_count] db=student_transcripts_tracking
+  Q:    For each semester, what is the name and id of the one with the most students registered?
+  GOLD: SELECT T1.semester_name , T1.semester_id FROM Semesters AS T1 JOIN Student_Enrolment AS T2 ON T1.semester_id = T2.semester_id GROUP BY T1.semester_id ORDER BY count(*) DESC LIMIT 1
+  GEN:  SELECT s.semester_id, s.semester_name, dp.degree_program_id, dp.degree_summary_name FROM ( SELECT semester_id, degree_program_id, COUNT(*) AS student_count, ROW_NUMBER() OVER (PARTITION BY semester_id ORDER BY COUNT(*) DESC) AS rn FROM Student_Enrolment GROUP BY semester_id, degree_program_id ) AS t JOIN Semesters s ON s.semester_id = t.semester_id JOIN Degree_Programs dp ON dp.degree_program_id = t.degree_program_id WHERE t.rn = 1;
+  gold -> 1 row(s) [('summer 2010', 2)]
+  gen  -> 9 row(s) [(1, 'spring 2010', 5, 'Master'), (2, 'summer 2010', 11, 'Bachelor'), (4, 'winter 2010', 2, 'Master')]
+
+#251 [different_column_count] db=student_transcripts_tracking
+  Q:    What is the first, middle, and last name, along with the id and number of enrollments, for the student who enrolled the most in any program?
+  GOLD: SELECT T1.student_id , T1.first_name , T1.middle_name , T1.last_name , count(*) , T1.student_id FROM Students AS T1 JOIN Student_Enrolment AS T2 ON T1.student_id = T2.student_id GROUP BY T1.student_id ORDER BY count(*) DESC LIMIT 1
+  GEN:  SELECT s.student_id, s.first_name, s.middle_name, s.last_name, COUNT(*) AS enrollment_count FROM Student_Enrolment se JOIN Students s ON se.student_id = s.student_id GROUP BY s.student_id, s.first_name, s.middle_name, s.last_name ORDER BY enrollment_count DESC LIMIT 1
+  gold -> 1 row(s) [(7, 'Frida', 'Aisha', 'Huel', 3, 7)]
+  gen  -> 1 row(s) [(6, 'Stanford', 'Mona', 'Rogahn', 3)]
+
+#266 [different_column_count] db=concert_singer
+  Q:    For each stadium, how many concerts play there?
+  GOLD: SELECT T2.name , count(*) FROM concert AS T1 JOIN stadium AS T2 ON T1.stadium_id = T2.stadium_id GROUP BY T1.stadium_id
+  GEN:  SELECT s.Stadium_ID, s.Name, COUNT(c.concert_ID) AS concert_count FROM stadium s LEFT JOIN concert c ON c.Stadium_ID = s.Stadium_ID GROUP BY s.Stadium_ID, s.Name ORDER BY s.Stadium_ID;
+  gold -> 5 row(s) [("Stark's Park", 1), ('Glebe Park', 1), ('Somerset Park', 2)]
+  gen  -> 9 row(s) [(1, "Stark's Park", 1), (2, 'Somerset Park', 2), (3, 'Bayview Stadium', 0)]
+
+#4 [different_rows] db=car_1
+  Q:    What are all the makers and models?
+  GOLD: SELECT Maker , Model FROM MODEL_LIST;
+  GEN:  SELECT car_makers.Maker, model_list.Model FROM car_makers JOIN model_list ON model_list.Maker = car_makers.Id;
+  gold -> 36 row(s) [(1, 'amc'), (2, 'audi'), (3, 'bmw')]
+  gen  -> 35 row(s) [('amc', 'amc'), ('volkswagen', 'audi'), ('bmw', 'bmw')]
+
+#16 [different_rows] db=student_transcripts_tracking
+  Q:    What are the first, middle, and last names, along with the ids, of all students who enrolled in 2 degree programs in one semester?
+  GOLD: SELECT T1.first_name , T1.middle_name , T1.last_name , T1.student_id FROM Students AS T1 JOIN Student_Enrolment AS T2 ON T1.student_id = T2.student_id GROUP BY T1.student_id HAVING count(*) = 2
+  GEN:  SELECT s.student_id, s.first_name, s.middle_name, s.last_name FROM Students s WHERE EXISTS ( SELECT 1 FROM Student_Enrolment se WHERE se.student_id = s.student_id GROUP BY se.semester_id HAVING COUNT(DISTINCT se.degree_program_id) = 2 );
+  gold -> 3 row(s) [('Jarvis', 'Aaliyah', 'Carroll', 4), ('Reva', 'Golda', 'Osinski', 9), ('Jordy', 'Osborne', 'Rempel', 14)]
+  gen  -> 1 row(s) [(7, 'Frida', 'Aisha', 'Huel')]
+
+#23 [different_rows] db=dog_kennels
+  Q:    List the last name of the owner owning the youngest dog.
+  GOLD: SELECT T1.last_name FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id = T2.owner_id WHERE T2.age = ( SELECT max(age) FROM Dogs )
+  GEN:  SELECT o.last_name FROM Owners o JOIN Dogs d ON o.owner_id = d.owner_id ORDER BY d.date_of_birth DESC LIMIT 1
+  gold -> 3 row(s) [('Feil',), ('Fisher',), ('Rippin',)]
+  gen  -> 1 row(s) [('Mertz',)]
+
+#53 [different_rows] db=cre_Doc_Template_Mgt
+  Q:    Return the different descriptions for templates that have been used in a document.
+  GOLD: SELECT DISTINCT T1.template_type_description FROM Ref_template_types AS T1 JOIN Templates AS T2 ON T1.template_type_code = T2.template_type_code JOIN Documents AS T3 ON T2.Template_ID = T3.template_ID
+  GEN:  SELECT DISTINCT t.Template_Details FROM Templates t JOIN Documents d ON d.Template_ID = t.Template_ID;
+  gold -> 4 row(s) [('Presentation',), ('Paper',), ('Book',)]
+  gen  -> 1 row(s) [('',)]
+
+#58 [different_rows] db=student_transcripts_tracking
+  Q:    What's the name of the course with most number of enrollments?
+  GOLD: SELECT T1.course_name FROM Courses AS T1 JOIN Student_Enrolment_Courses AS T2 ON T1.course_id = T2.course_id GROUP BY T1.course_name ORDER BY count(*) DESC LIMIT 1
+  GEN:  SELECT c.course_name FROM Courses c JOIN Student_Enrolment_Courses sec ON c.course_id = sec.course_id GROUP BY c.course_id, c.course_name ORDER BY COUNT(*) DESC LIMIT 1;
+  gold -> 1 row(s) [('rs',)]
+  gen  -> 1 row(s) [('math',)]
+
+#85 [different_rows] db=student_transcripts_tracking
+  Q:    Who are enrolled in 2 degree programs in one semester? List the first name, middle name and last name and the id.
+  GOLD: SELECT T1.first_name , T1.middle_name , T1.last_name , T1.student_id FROM Students AS T1 JOIN Student_Enrolment AS T2 ON T1.student_id = T2.student_id GROUP BY T1.student_id HAVING count(*) = 2
+  GEN:  SELECT DISTINCT s.first_name, s.middle_name, s.last_name, s.student_id FROM Students s WHERE EXISTS ( SELECT 1 FROM Student_Enrolment se WHERE se.student_id = s.student_id GROUP BY se.semester_id HAVING COUNT(DISTINCT se.degree_program_id) = 2 );
+  gold -> 3 row(s) [('Jarvis', 'Aaliyah', 'Carroll', 4), ('Reva', 'Golda', 'Osinski', 9), ('Jordy', 'Osborne', 'Rempel', 14)]
+  gen  -> 1 row(s) [('Frida', 'Aisha', 'Huel', 7)]
+
+#199 [different_rows] db=student_transcripts_tracking
+  Q:    What is the name of the course with the most students enrolled?
+  GOLD: SELECT T1.course_name FROM Courses AS T1 JOIN Student_Enrolment_Courses AS T2 ON T1.course_id = T2.course_id GROUP BY T1.course_name ORDER BY count(*) DESC LIMIT 1
+  GEN:  SELECT c.course_name FROM Courses c JOIN Student_Enrolment_Courses sec ON c.course_id = sec.course_id GROUP BY c.course_id, c.course_name ORDER BY COUNT(*) DESC LIMIT 1
+  gold -> 1 row(s) [('rs',)]
+  gen  -> 1 row(s) [('math',)]
+
+#213 [different_rows] db=car_1
+  Q:    What is the number of cars with a horsepower greater than 150?
+  GOLD: SELECT count(*) FROM CARS_DATA WHERE horsepower > 150;
+  GEN:  SELECT COUNT(*) FROM cars_data WHERE CAST(Horsepower AS INTEGER) > 150;
+  gold -> 1 row(s) [(281,)]
+  gen  -> 1 row(s) [(49,)]
+
+#214 [different_rows] db=car_1
+  Q:    What is the largest amount of horsepower for the models with 3 cylinders and what make is it?
+  GOLD: SELECT T2.horsepower , T1.Make FROM CAR_NAMES AS T1 JOIN CARS_DATA AS T2 ON T1.MakeId = T2.Id WHERE T2.cylinders = 3 ORDER BY T2.horsepower DESC LIMIT 1;
+  GEN:  SELECT cm.Maker, CAST(cd.Horsepower AS INTEGER) AS Horsepower FROM cars_data cd JOIN car_names cn ON cd.Id = cn.MakeId JOIN model_list ml ON cn.Model = ml.Model JOIN car_makers cm ON ml.Maker = cm.Id WHERE cd.Cylinders = 3 ORDER BY CAST(cd.Horsepower AS INTEGER) DESC LIMIT 1;
+  gold -> 1 row(s) [('97', 'mazda rx2 coupe')]
+  gen  -> 1 row(s) [('mazda', 110)]
+
+#215 [different_rows] db=world_1
+  Q:    What are the name, independence year, and surface area of the country with the smallest population?
+  GOLD: SELECT Name , SurfaceArea , IndepYear FROM country ORDER BY Population LIMIT 1
+  GEN:  SELECT Name, IndepYear, SurfaceArea FROM country WHERE Population = (SELECT MIN(Population) FROM country);
+  gold -> 1 row(s) [('Antarctica', 13120000.0, None)]
+  gen  -> 7 row(s) [('Antarctica', None, 13120000.0), ('French Southern territories', None, 7780.0), ('Bouvet Island', None, 59.0)]
+
+#222 [different_rows] db=wta_1
+  Q:    Find the name and rank of the 3 youngest winners across all matches.
+  GOLD: SELECT DISTINCT winner_name , winner_rank FROM matches ORDER BY winner_age LIMIT 3
+  GEN:  WITH min_age AS ( SELECT winner_id, MIN(winner_age) AS min_age FROM matches GROUP BY winner_id ) SELECT m.winner_name, m.winner_rank FROM matches m JOIN min_age ma ON m.winner_id = ma.winner_id AND m.winner_age = ma.min_age ORDER BY ma.min_age ASC LIMIT 3;
+  gold -> 3 row(s) [('Madison Keys', 17), ('Madison Keys', 24), ('Madison Keys', 16)]
+  gen  -> 3 row(s) [('Madison Keys', 17), ('Elina Svitolina', 16), ('Garbine Muguruza', 4)]
+
+#229 [different_rows] db=world_1
+  Q:    Give the mean GNP and total population of nations which are considered US territory.
+  GOLD: SELECT avg(GNP) , sum(population) FROM country WHERE GovernmentForm = "US Territory"
+  GEN:  SELECT AVG(GNP) AS mean_gnp, SUM(Population) AS total_population FROM country WHERE Name LIKE '%United States%';
+  gold -> 1 row(s) [(510.3333333333333, 329000)]
+  gen  -> 1 row(s) [(4255350.0, 278357000)]
+
+#233 [different_rows] db=world_1
+  Q:    Find the average life expectancy and total population for each continent where the average life expectancy is shorter than 72?
+  GOLD: SELECT sum(Population) , avg(LifeExpectancy) , Continent FROM country GROUP BY Continent HAVING avg(LifeExpectancy) < 72
+  GEN:  SELECT Continent, AVG(LifeExpectancy) AS avg_life_expectancy, SUM(Population) AS total_population FROM country WHERE LifeExpectancy IS NOT NULL GROUP BY Continent HAVING AVG(LifeExpectancy) < 72;
+  gold -> 4 row(s) [(784475000, 52.5719298245614, 'Africa'), (3705025700, 67.44117647058823, 'Asia'), (30401150, 69.715, 'Oceania')]
+  gen  -> 4 row(s) [('Africa', 52.5719298245614, 784475000), ('Asia', 67.44117647058823, 3705025700), ('Oceania', 69.715, 30377000)]
+
+#236 [different_rows] db=student_transcripts_tracking
+  Q:    What is the mobile phone number of the student named Timmothy Ward ?
+  GOLD: select cell_mobile_number from students where first_name = 'timmothy' and last_name = 'ward'
+  GEN:  SELECT cell_mobile_number FROM Students WHERE first_name = 'Timmothy' AND last_name = 'Ward';
+  gold -> 0 row(s) []
+  gen  -> 1 row(s) [('(096)889-8954x524',)]
+
+#258 [different_rows] db=network_1
+  Q:    Count the number of likes for each student id.
+  GOLD: SELECT student_id , count(*) FROM Likes GROUP BY student_id
+  GEN:  SELECT liked_id AS student_id, COUNT(*) AS like_count FROM Likes GROUP BY liked_id;
+  gold -> 10 row(s) [(1025, 1), (1247, 1), (1316, 1)]
+  gen  -> 8 row(s) [(1101, 1), (1247, 1), (1304, 1)]
+
+#265 [different_rows] db=car_1
+  Q:    What is the number of the cars with horsepower more than 150?
+  GOLD: SELECT count(*) FROM CARS_DATA WHERE horsepower > 150;
+  GEN:  SELECT COUNT(*) FROM cars_data WHERE CAST(Horsepower AS INTEGER) > 150;
+  gold -> 1 row(s) [(281,)]
+  gen  -> 1 row(s) [(49,)]
+
+#294 [different_rows] db=orchestra
+  Q:    What is the name of the conductor who has conducted the most orchestras?
+  GOLD: SELECT T1.Name FROM conductor AS T1 JOIN orchestra AS T2 ON T1.Conductor_ID = T2.Conductor_ID GROUP BY T2.Conductor_ID ORDER BY COUNT(*) DESC LIMIT 1
+  GEN:  SELECT c.Name FROM conductor c JOIN orchestra o ON c.Conductor_ID = o.Conductor_ID GROUP BY c.Conductor_ID, c.Name ORDER BY COUNT(*) DESC LIMIT 1;
+  gold -> 1 row(s) [('Michael Tilson Thomas',)]
+  gen  -> 1 row(s) [('Antal Doráti',)]
+
+#295 [different_rows] db=flight_2
+  Q:    What is the airport code of the airport with the most flights?
+  GOLD: SELECT T1.AirportCode FROM AIRPORTS AS T1 JOIN FLIGHTS AS T2 ON T1.AirportCode = T2.DestAirport OR T1.AirportCode = T2.SourceAirport GROUP BY T1.AirportCode ORDER BY count(*) DESC LIMIT 1
+  GEN:  SELECT AirportCode FROM ( SELECT AirportCode, SUM(cnt) AS total_flights FROM ( SELECT SourceAirport AS AirportCode, COUNT(*) AS cnt FROM flights GROUP BY SourceAirport UNION ALL SELECT DestAirport AS AirportCode, COUNT(*) AS cnt FROM flights GROUP BY DestAirport ) AS combined GROUP BY AirportCode ) AS totals ORDER BY total_flights DESC LIMIT 1;
+  gold -> 0 row(s) []
+  gen  -> 1 row(s) [(' AAF',)]
+
+#35 [empty_or_zero_result] db=student_transcripts_tracking
+  Q:    What is the description of the department whose name has the substring the computer?
+  GOLD: SELECT department_description FROM Departments WHERE department_name LIKE '%computer%'
+  GEN:  SELECT department_description FROM Departments WHERE department_name LIKE '%the computer%';
+  gold -> 1 row(s) [('error',)]
+  gen  -> 0 row(s) []
+
+#56 [empty_or_zero_result] db=cre_Doc_Template_Mgt
+  Q:    What is the document id with least number of paragraphs?
+  GOLD: SELECT document_id FROM Paragraphs GROUP BY document_id ORDER BY count(*) ASC LIMIT 1
+  GEN:  SELECT d.Document_ID FROM Documents d LEFT JOIN Paragraphs p ON d.Document_ID = p.Document_ID GROUP BY d.Document_ID ORDER BY COUNT(p.Paragraph_ID) ASC LIMIT 1;
+  gold -> 1 row(s) [(3,)]
+  gen  -> 1 row(s) [(0,)]
+
+#104 [empty_or_zero_result] db=car_1
+  Q:    What is the number of car models created by the car maker American Motor Company?
+  GOLD: SELECT count(*) FROM CAR_MAKERS AS T1 JOIN MODEL_LIST AS T2 ON T1.Id = T2.Maker WHERE T1.FullName = 'American Motor Company';
+  GEN:  SELECT COUNT(*) FROM model_list ml JOIN car_makers cm ON ml.Maker = cm.Id WHERE cm.Maker = 'American Motor Company';
+  gold -> 1 row(s) [(1,)]
+  gen  -> 1 row(s) [(0,)]
+
+#132 [empty_or_zero_result] db=car_1
+  Q:    Which countries in europe have at least 3 car manufacturers?
+  GOLD: SELECT T1.CountryName FROM COUNTRIES AS T1 JOIN CONTINENTS AS T2 ON T1.Continent = T2.ContId JOIN CAR_MAKERS AS T3 ON T1.CountryId = T3.Country WHERE T2.Continent = 'europe' GROUP BY T1.CountryName HAVING count(*) >= 3;
+  GEN:  SELECT c.CountryName FROM countries c JOIN continents ct ON c.Continent = ct.ContId JOIN car_makers cm ON cm.Country = c.CountryId WHERE ct.Continent = 'Europe' GROUP BY c.CountryName HAVING COUNT(DISTINCT cm.Id) >= 3;
+  gold -> 2 row(s) [('france',), ('germany',)]
+  gen  -> 0 row(s) []
+
+#173 [empty_or_zero_result] db=flight_2
+  Q:    What country is Jetblue Airways affiliated with?
+  GOLD: SELECT Country FROM AIRLINES WHERE Airline = "JetBlue Airways"
+  GEN:  SELECT Country FROM airlines WHERE Airline = 'Jetblue Airways';
+  gold -> 1 row(s) [('USA',)]
+  gen  -> 0 row(s) []
+
+#181 [empty_or_zero_result] db=tvshow
+  Q:    What are the package options and the name of the series for the TV Channel that supports high definition TV?
+  GOLD: SELECT package_option , series_name FROM TV_Channel WHERE hight_definition_TV = "yes"
+  GEN:  SELECT Package_Option, series_name FROM TV_Channel WHERE Hight_definition_TV = 'Yes';
+  gold -> 1 row(s) [('Sky Famiglia + Sky HD', 'MTV Live HD')]
+  gen  -> 0 row(s) []
+
+#193 [empty_or_zero_result] db=course_teach
+  Q:    Show the name of the teacher for the math course.
+  GOLD: SELECT T3.Name FROM course_arrange AS T1 JOIN course AS T2 ON T1.Course_ID = T2.Course_ID JOIN teacher AS T3 ON T1.Teacher_ID = T3.Teacher_ID WHERE T2.Course = "Math"
+  GEN:  SELECT t.Name FROM teacher t JOIN course_arrange ca ON t.Teacher_ID = ca.Teacher_ID JOIN course c ON ca.Course_ID = c.Course_ID WHERE c.Course = 'math';
+  gold -> 2 row(s) [('Kearsley Brown',), ('Vicente Carretero',)]
+  gen  -> 0 row(s) []
+
+#239 [empty_or_zero_result] db=course_teach
+  Q:    What are the names of the people who teach math courses?
+  GOLD: SELECT T3.Name FROM course_arrange AS T1 JOIN course AS T2 ON T1.Course_ID = T2.Course_ID JOIN teacher AS T3 ON T1.Teacher_ID = T3.Teacher_ID WHERE T2.Course = "Math"
+  GEN:  SELECT DISTINCT t.Name FROM teacher t JOIN course_arrange ca ON t.Teacher_ID = ca.Teacher_ID JOIN course c ON ca.Course_ID = c.Course_ID WHERE c.Course = 'math';
+  gold -> 2 row(s) [('Kearsley Brown',), ('Vicente Carretero',)]
+  gen  -> 0 row(s) []
+
+#271 [empty_or_zero_result] db=car_1
+  Q:    How many car models are produced in the usa?
+  GOLD: SELECT count(*) FROM MODEL_LIST AS T1 JOIN CAR_MAKERS AS T2 ON T1.Maker = T2.Id JOIN COUNTRIES AS T3 ON T2.Country = T3.CountryId WHERE T3.CountryName = 'usa';
+  GEN:  SELECT COUNT(*) FROM model_list ml JOIN car_makers cm ON ml.Maker = cm.Id JOIN countries c ON cm.Country = c.CountryId WHERE c.CountryName = 'USA';
+  gold -> 1 row(s) [(13,)]
+  gen  -> 1 row(s) [(0,)]
+
+#287 [empty_or_zero_result] db=cre_Doc_Template_Mgt
+  Q:    Return the id of the document with the fewest paragraphs.
+  GOLD: SELECT document_id FROM Paragraphs GROUP BY document_id ORDER BY count(*) ASC LIMIT 1
+  GEN:  SELECT d.Document_ID FROM Documents d LEFT JOIN Paragraphs p ON d.Document_ID = p.Document_ID GROUP BY d.Document_ID ORDER BY COUNT(p.Paragraph_ID) ASC LIMIT 1
+  gold -> 1 row(s) [(3,)]
+  gen  -> 1 row(s) [(0,)]
+
+#290 [empty_or_zero_result] db=tvshow
+  Q:    Find the package choice and series name of the TV channel that has high definition TV.
+  GOLD: SELECT package_option , series_name FROM TV_Channel WHERE hight_definition_TV = "yes"
+  GEN:  SELECT "Package_Option", "series_name" FROM "TV_Channel" WHERE "Hight_definition_TV" = 'Yes';
+  gold -> 1 row(s) [('Sky Famiglia + Sky HD', 'MTV Live HD')]
+  gen  -> 0 row(s) []
+
+#121 [row_subset] db=dog_kennels
+  Q:    Which professionals have done at least two types of treatments? List the professional id and cell phone.
+  GOLD: SELECT T1.professional_id , T1.cell_number FROM Professionals AS T1 JOIN Treatments AS T2 ON T1.professional_id = T2.professional_id GROUP BY T1.professional_id HAVING count(*) >= 2
+  GEN:  SELECT p.professional_id, p.cell_number FROM Professionals p JOIN Treatments t ON p.professional_id = t.professional_id GROUP BY p.professional_id, p.cell_number HAVING COUNT(DISTINCT t.treatment_type_code) >= 2;
+  gold -> 6 row(s) [(4, '00230569697'), (6, '139-321-7313'), (8, '328.842.3792')]
+  gen  -> 4 row(s) [(6, '139-321-7313'), (9, '962-983-8109x3509'), (10, '461-801-2600')]
+
+#198 [row_subset] db=dog_kennels
+  Q:    What are the names of the dogs for which the owner has not spend more than 1000 for treatment ?
+  GOLD: select name from dogs where dog_id not in ( select dog_id from treatments group by dog_id having sum(cost_of_treatment) > 1000 )
+  GEN:  SELECT d.name FROM Dogs d JOIN ( SELECT o.owner_id, COALESCE(SUM(t.cost_of_treatment), 0) AS total_spent FROM Owners o LEFT JOIN Dogs d2 ON d2.owner_id = o.owner_id LEFT JOIN Treatments t ON t.dog_id = d2.dog_id GROUP BY o.owner_id ) os ON d.owner_id = os.owner_id WHERE os.total_spent <= 1000;
+  gold -> 12 row(s) [('Kacey',), ('Hipolito',), ('Mavis',)]
+  gen  -> 8 row(s) [('Hipolito',), ('Mavis',), ('Jeffrey',)]
+
+#225 [row_subset] db=car_1
+  Q:    What is the number of countries with more than 2 car makers ?
+  GOLD: select count(*) from countries as t1 join car_makers as t2 on t1.countryid = t2.country group by t1.countryid having count(*) > 2
+  GEN:  SELECT COUNT(*) FROM ( SELECT Country FROM car_makers GROUP BY Country HAVING COUNT(*) > 2 ) AS sub;
+  gold -> 4 row(s) [(4,), (4,), (3,)]
+  gen  -> 1 row(s) [(4,)]
+
+#252 [row_subset] db=world_1
+  Q:    What are the African countries that have a population less than any country in Asia?
+  GOLD: SELECT Name FROM country WHERE Continent = "Africa" AND population < (SELECT max(population) FROM country WHERE Continent = "Asia")
+  GEN:  SELECT Name FROM country WHERE Continent = 'Africa' AND Population < ( SELECT MIN(Population) FROM country WHERE Continent = 'Asia' );
+  gold -> 58 row(s) [('Angola',), ('Burundi',), ('Benin',)]
+  gen  -> 5 row(s) [('British Indian Ocean Territory',), ('Mayotte',), ('Saint Helena',)]
+
+#11 [row_superset] db=dog_kennels
+  Q:    List the names of the dogs of the rarest breed and the treatment dates of them.
+  GOLD: SELECT T1.name , T2.date_of_treatment FROM Dogs AS T1 JOIN Treatments AS T2 ON T1.dog_id = T2.dog_id WHERE T1.breed_code = ( SELECT breed_code FROM Dogs GROUP BY breed_code ORDER BY count(*) ASC LIMIT 1 )
+  GEN:  SELECT d.name, t.date_of_treatment FROM Dogs d JOIN Treatments t ON d.dog_id = t.dog_id WHERE d.breed_code IN ( SELECT breed_code FROM Dogs GROUP BY breed_code HAVING COUNT(*) = ( SELECT MIN(cnt) FROM ( SELECT COUNT(*) AS cnt FROM Dogs GROUP BY breed_code ) AS breed_counts ) );
+  gold -> 5 row(s) [('Lyric', '2018-03-19 04:39:54'), ('Houston', '2018-03-15 20:25:34'), ('Lyric', '2018-03-08 05:26:23')]
+  gen  -> 10 row(s) [('Lyric', '2018-03-19 04:39:54'), ('Houston', '2018-03-15 20:25:34'), ('Lyric', '2018-03-08 05:26:23')]
+
+#13 [row_superset] db=course_teach
+  Q:    What is the most commmon hometowns for teachers?
+  GOLD: SELECT Hometown FROM teacher GROUP BY Hometown ORDER BY COUNT(*) DESC LIMIT 1
+  GEN:  SELECT Hometown FROM teacher GROUP BY Hometown HAVING COUNT(*) = ( SELECT MAX(cnt) FROM ( SELECT COUNT(*) AS cnt FROM teacher GROUP BY Hometown ) AS sub );
+  gold -> 1 row(s) [('Turton Urban District',)]
+  gen  -> 7 row(s) [('Blackrod Urban District',), ('Bolton County Borough',), ('Farnworth Municipal Borough',)]
+
+#20 [row_superset] db=singer
+  Q:    For each singer name, what is the total sales for their songs?
+  GOLD: SELECT T1.Name , sum(T2.Sales) FROM singer AS T1 JOIN song AS T2 ON T1.Singer_ID = T2.Singer_ID GROUP BY T1.Name
+  GEN:  SELECT s.Name, COALESCE(SUM(o.Sales), 0) AS total_sales FROM singer s LEFT JOIN song o ON s.Singer_ID = o.Singer_ID GROUP BY s.Name;
+  gold -> 6 row(s) [('Christy Walton', 651421.0), ('Gina Rinehart', 292000.0), ('Iris Fontbona', 335000.0)]
+  gen  -> 8 row(s) [('Abigail Johnson', 0), ('Alice Walton', 0), ('Christy Walton', 651421.0)]
+
+#40 [row_superset] db=cre_Doc_Template_Mgt
+  Q:    Show all document ids, names and the number of paragraphs in each document.
+  GOLD: SELECT T1.document_id , T2.document_name , count(*) FROM Paragraphs AS T1 JOIN Documents AS T2 ON T1.document_id = T2.document_id GROUP BY T1.document_id
+  GEN:  SELECT d.Document_ID, d.Document_Name, COUNT(p.Paragraph_ID) AS Paragraph_Count FROM Documents d LEFT JOIN Paragraphs p ON d.Document_ID = p.Document_ID GROUP BY d.Document_ID, d.Document_Name;
+  gold -> 10 row(s) [(3, 'Summer Show', 1), (80, 'Welcome to NY', 2), (2394, 'Customer reviews', 3)]
+  gen  -> 15 row(s) [(0, 'Introduction of OS', 0), (1, 'Understanding DB', 0), (3, 'Summer Show', 1)]
+
+#118 [row_superset] db=cre_Doc_Template_Mgt
+  Q:    What are the different template type codes, and how many documents use each type?
+  GOLD: SELECT T1.template_type_code , count(*) FROM Templates AS T1 JOIN Documents AS T2 ON T1.template_id = T2.template_id GROUP BY T1.template_type_code
+  GEN:  SELECT rtt.Template_Type_Code, COUNT(DISTINCT d.Document_ID) AS Document_Count FROM Ref_Template_Types rtt LEFT JOIN Templates t ON rtt.Template_Type_Code = t.Template_Type_Code LEFT JOIN Documents d ON t.Template_ID = d.Template_ID GROUP BY rtt.Template_Type_Code;
+  gold -> 4 row(s) [('AD', 3), ('BK', 5), ('PP', 4)]
+  gen  -> 5 row(s) [('AD', 3), ('BK', 5), ('CV', 0)]
+
+#138 [row_superset] db=flight_2
+  Q:    What is the abbreviation of the airilne has the fewest flights and what country is it in?
+  GOLD: SELECT T1.Abbreviation , T1.Country FROM AIRLINES AS T1 JOIN FLIGHTS AS T2 ON T1.uid = T2.Airline GROUP BY T1.Airline ORDER BY count(*) LIMIT 1
+  GEN:  SELECT a.Abbreviation, a.Country FROM airlines a JOIN ( SELECT Airline, COUNT(*) AS flight_count FROM flights GROUP BY Airline ) f ON a.uid = f.Airline WHERE f.flight_count = ( SELECT MIN(flight_count) FROM ( SELECT Airline, COUNT(*) AS flight_count FROM flights GROUP BY Airline ) sub );
+  gold -> 1 row(s) [('AirTran', 'USA')]
+  gen  -> 12 row(s) [('UAL', 'USA'), ('USAir', 'USA'), ('Delta', 'USA')]
+
+#175 [row_superset] db=tvshow
+  Q:    find id of the tv channels that from the countries where have more than two tv channels.
+  GOLD: SELECT id FROM tv_channel GROUP BY country HAVING count(*) > 2
+  GEN:  SELECT id FROM TV_Channel WHERE Country IN ( SELECT Country FROM TV_Channel GROUP BY Country HAVING COUNT(*) > 2 );
+  gold -> 1 row(s) [('700',)]
+  gen  -> 12 row(s) [('700',), ('701',), ('703',)]
+
+#177 [row_superset] db=network_1
+  Q:    What are the names of the high schoolers and how many friends does each have?
+  GOLD: SELECT T2.name , count(*) FROM Friend AS T1 JOIN Highschooler AS T2 ON T1.student_id = T2.id GROUP BY T1.student_id
+  GEN:  SELECT h.name, COUNT(f.friend_id) AS friend_count FROM Highschooler h LEFT JOIN Friend f ON h.ID = f.student_id GROUP BY h.ID, h.name;
+  gold -> 14 row(s) [('Haley', 1), ('Alexis', 2), ('Jordan', 1)]
+  gen  -> 16 row(s) [('John', 0), ('Haley', 1), ('Alexis', 2)]
+
+#217 [row_superset] db=dog_kennels
+  Q:    Which dogs are of the rarest breed? Show their names and treatment dates.
+  GOLD: SELECT T1.name , T2.date_of_treatment FROM Dogs AS T1 JOIN Treatments AS T2 ON T1.dog_id = T2.dog_id WHERE T1.breed_code = ( SELECT breed_code FROM Dogs GROUP BY breed_code ORDER BY count(*) ASC LIMIT 1 )
+  GEN:  SELECT d.name, t.date_of_treatment FROM Dogs d JOIN Treatments t ON d.dog_id = t.dog_id WHERE d.breed_code IN ( SELECT breed_code FROM Dogs GROUP BY breed_code HAVING COUNT(*) = ( SELECT MIN(cnt) FROM ( SELECT COUNT(*) AS cnt FROM Dogs GROUP BY breed_code ) AS breed_counts ) );
+  gold -> 5 row(s) [('Lyric', '2018-03-19 04:39:54'), ('Houston', '2018-03-15 20:25:34'), ('Lyric', '2018-03-08 05:26:23')]
+  gen  -> 10 row(s) [('Lyric', '2018-03-19 04:39:54'), ('Houston', '2018-03-15 20:25:34'), ('Lyric', '2018-03-08 05:26:23')]
+
+#289 [row_superset] db=course_teach
+  Q:    What are the names of the teachers and how many courses do they teach?
+  GOLD: SELECT T2.Name , COUNT(*) FROM course_arrange AS T1 JOIN teacher AS T2 ON T1.Teacher_ID = T2.Teacher_ID GROUP BY T2.Name
+  GEN:  SELECT t.Name, COUNT(DISTINCT ca.Course_ID) AS course_count FROM teacher t LEFT JOIN course_arrange ca ON t.Teacher_ID = ca.Teacher_ID GROUP BY t.Name;
+  gold -> 5 row(s) [('Anne Walker', 2), ('Gustaaf Deloor', 1), ('Kearsley Brown', 1)]
+  gen  -> 7 row(s) [('Anne Walker', 2), ('Gustaaf Deloor', 1), ('John Deloor', 0)]
+
+=== 2. CORRECT rows flagged by check A, degenerate result (16) ===
+
+#5 [A false positive] db=flight_2
+  Q:    How many flights land in Aberdeen or Abilene?
+  GOLD: SELECT count(*) FROM Flights AS T1 JOIN Airports AS T2 ON T1.DestAirport = T2.AirportCode WHERE T2.city = "Aberdeen" OR T2.city = "Abilene"
+  GEN:  SELECT COUNT(*) FROM flights WHERE DestAirport IN ( SELECT AirportCode FROM airports WHERE City IN ('Aberdeen', 'Abilene') );
+  gold -> 1 row(s) [(0,)]
+  gen  -> 1 row(s) [(0,)]
+  literals: 'Aberdeen' -> absent; 'Abilene' -> absent
+
+#7 [A false positive] db=flight_2
+  Q:    How many flights depart from City 'Aberdeen' and have destination City 'Ashley'?
+  GOLD: SELECT count(*) FROM FLIGHTS AS T1 JOIN AIRPORTS AS T2 ON T1.DestAirport = T2.AirportCode JOIN AIRPORTS AS T3 ON T1.SourceAirport = T3.AirportCode WHERE T2.City = "Ashley" AND T3.City = "Aberdeen"
+  GEN:  SELECT COUNT(*) FROM flights f JOIN airports a_src ON f.SourceAirport = a_src.AirportCode JOIN airports a_dest ON f.DestAirport = a_dest.AirportCode WHERE a_src.City = 'Aberdeen' AND a_dest.City = 'Ashley';
+  gold -> 1 row(s) [(0,)]
+  gen  -> 1 row(s) [(0,)]
+  literals: 'Aberdeen' -> absent; 'Ashley' -> absent
+
+#17 [A false positive] db=flight_2
+  Q:    List the airport code and name in the city of Anthony.
+  GOLD: SELECT AirportCode , AirportName FROM AIRPORTS WHERE city = "Anthony"
+  GEN:  SELECT AirportCode, AirportName FROM airports WHERE City = 'Anthony';
+  gold -> 0 row(s) []
+  gen  -> 0 row(s) []
+  literals: 'Anthony' -> absent
+
+#42 [A false positive] db=flight_2
+  Q:    What are the names of airports in Aberdeen?
+  GOLD: SELECT AirportName FROM AIRPORTS WHERE City = "Aberdeen"
+  GEN:  SELECT AirportName FROM airports WHERE City = 'Aberdeen';
+  gold -> 0 row(s) []
+  gen  -> 0 row(s) []
+  literals: 'Aberdeen' -> absent
+
+#61 [A false positive] db=flight_2
+  Q:    Return the number of flights arriving in Aberdeen.
+  GOLD: SELECT count(*) FROM FLIGHTS AS T1 JOIN AIRPORTS AS T2 ON T1.DestAirport = T2.AirportCode WHERE T2.City = "Aberdeen"
+  GEN:  SELECT COUNT(*) FROM flights WHERE DestAirport IN (SELECT AirportCode FROM airports WHERE City = 'Aberdeen');
+  gold -> 1 row(s) [(0,)]
+  gen  -> 1 row(s) [(0,)]
+  literals: 'Aberdeen' -> absent
+
+#112 [A false positive] db=course_teach
+  Q:    What are the towns from which at least two teachers come from?
+  GOLD: SELECT Hometown FROM teacher GROUP BY Hometown HAVING COUNT(*) >= 2
+  GEN:  SELECT Hometown FROM teacher GROUP BY Hometown HAVING COUNT(*) >= 2;
+  gold -> 0 row(s) []
+  gen  -> 0 row(s) []
+
+#129 [A false positive] db=world_1
+  Q:    Give the names of countries that are in Europe and have a population equal to 80000.
+  GOLD: SELECT Name FROM country WHERE continent = "Europe" AND Population = "80000"
+  GEN:  SELECT Name FROM country WHERE Continent = 'Europe' AND Population = 80000;
+  gold -> 0 row(s) []
+  gen  -> 0 row(s) []
+
+#145 [A false positive] db=flight_2
+  Q:    Which airlines have a flight with destination airport AHD?
+  GOLD: SELECT T1.Airline FROM AIRLINES AS T1 JOIN FLIGHTS AS T2 ON T1.uid = T2.Airline WHERE T2.DestAirport = "AHD"
+  GEN:  SELECT DISTINCT a.Airline FROM airlines AS a JOIN flights AS f ON a.uid = f.Airline WHERE f.DestAirport = 'AHD';
+  gold -> 0 row(s) []
+  gen  -> 0 row(s) []
+
+#151 [A false positive] db=flight_2
+  Q:    What are airport names at City 'Aberdeen'?
+  GOLD: SELECT AirportName FROM AIRPORTS WHERE City = "Aberdeen"
+  GEN:  SELECT AirportName FROM airports WHERE City = 'Aberdeen';
+  gold -> 0 row(s) []
+  gen  -> 0 row(s) []
+  literals: 'Aberdeen' -> absent
+
+#155 [A false positive] db=flight_2
+  Q:    Find all airlines that have flights from airport 'CVO' but not from 'APG'.
+  GOLD: SELECT T1.Airline FROM AIRLINES AS T1 JOIN FLIGHTS AS T2 ON T1.uid = T2.Airline WHERE T2.SourceAirport = "CVO" EXCEPT SELECT T1.Airline FROM AIRLINES AS T1 JOIN FLIGHTS AS T2 ON T1.uid = T2.Airline WHERE T2.SourceAirport = "APG"
+  GEN:  SELECT a.Airline FROM airlines a WHERE EXISTS ( SELECT 1 FROM flights f WHERE f.Airline = a.uid AND f.SourceAirport = 'CVO' ) AND NOT EXISTS ( SELECT 1 FROM flights f WHERE f.Airline = a.uid AND f.SourceAirport = 'APG' );
+  gold -> 0 row(s) []
+  gen  -> 0 row(s) []
+
+#160 [A false positive] db=concert_singer
+  Q:    Show location and name for all stadiums with a capacity between 5000 and 10000.
+  GOLD: SELECT LOCATION , name FROM stadium WHERE capacity BETWEEN 5000 AND 10000
+  GEN:  SELECT "Location", "Name" FROM "stadium" WHERE "Capacity" BETWEEN 5000 AND 10000;
+  gold -> 0 row(s) []
+  gen  -> 0 row(s) []
+
+#165 [A false positive] db=flight_2
+  Q:    What are flight numbers of flights arriving at Airport "APG"?
+  GOLD: SELECT FlightNo FROM FLIGHTS WHERE DestAirport = "APG"
+  GEN:  SELECT FlightNo FROM flights WHERE DestAirport = 'APG';
+  gold -> 0 row(s) []
+  gen  -> 0 row(s) []
+
+#237 [A false positive] db=flight_2
+  Q:    Find all airlines that have flights from both airports 'APG' and 'CVO'.
+  GOLD: SELECT T1.Airline FROM AIRLINES AS T1 JOIN FLIGHTS AS T2 ON T1.uid = T2.Airline WHERE T2.SourceAirport = "APG" INTERSECT SELECT T1.Airline FROM AIRLINES AS T1 JOIN FLIGHTS AS T2 ON T1.uid = T2.Airline WHERE T2.SourceAirport = "CVO"
+  GEN:  SELECT a.* FROM airlines a WHERE a.uid IN ( SELECT f.Airline FROM flights f WHERE f.SourceAirport IN ('APG', 'CVO') GROUP BY f.Airline HAVING COUNT(DISTINCT f.SourceAirport) = 2 );
+  gold -> 0 row(s) []
+  gen  -> 0 row(s) []
+
+#257 [A false positive] db=employee_hire_evaluation
+  Q:    Find the districts in which there are both shops selling less than 3000 products and shops selling more than 10000 products.
+  GOLD: SELECT district FROM shop WHERE Number_products < 3000 INTERSECT SELECT district FROM shop WHERE Number_products > 10000
+  GEN:  SELECT DISTINCT s1.District FROM shop s1 JOIN shop s2 ON s1.District = s2.District WHERE s1.Number_products < 3000 AND s2.Number_products > 10000;
+  gold -> 0 row(s) []
+  gen  -> 0 row(s) []
+
+#259 [A false positive] db=flight_2
+  Q:    How many flights fly from Aberdeen to Ashley?
+  GOLD: SELECT count(*) FROM FLIGHTS AS T1 JOIN AIRPORTS AS T2 ON T1.DestAirport = T2.AirportCode JOIN AIRPORTS AS T3 ON T1.SourceAirport = T3.AirportCode WHERE T2.City = "Ashley" AND T3.City = "Aberdeen"
+  GEN:  SELECT COUNT(*) FROM flights f JOIN airports a_src ON f.SourceAirport = a_src.AirportCode JOIN airports a_dest ON f.DestAirport = a_dest.AirportCode WHERE a_src.City = 'Aberdeen' AND a_dest.City = 'Ashley';
+  gold -> 1 row(s) [(0,)]
+  gen  -> 1 row(s) [(0,)]
+  literals: 'Aberdeen' -> absent; 'Ashley' -> absent
+
+#284 [A false positive] db=concert_singer
+  Q:    Find the number of concerts happened in the stadium with the highest capacity .
+  GOLD: select count(*) from concert where stadium_id = (select stadium_id from stadium order by capacity desc limit 1)
+  GEN:  SELECT COUNT(*) FROM concert c WHERE c.Stadium_ID IN ( SELECT CAST(Stadium_ID AS text) FROM stadium WHERE Capacity = (SELECT MAX(Capacity) FROM stadium) );
+  gold -> 1 row(s) [(0,)]
+  gen  -> 1 row(s) [(0,)]
+
+=== 3. CORRECT rows flagged by check B, literal not in DB (7) ===
+
+#5 [B false positive] db=flight_2
+  Q:    How many flights land in Aberdeen or Abilene?
+  GOLD: SELECT count(*) FROM Flights AS T1 JOIN Airports AS T2 ON T1.DestAirport = T2.AirportCode WHERE T2.city = "Aberdeen" OR T2.city = "Abilene"
+  GEN:  SELECT COUNT(*) FROM flights WHERE DestAirport IN ( SELECT AirportCode FROM airports WHERE City IN ('Aberdeen', 'Abilene') );
+  gold -> 1 row(s) [(0,)]
+  gen  -> 1 row(s) [(0,)]
+  literals: 'Aberdeen' -> absent; 'Abilene' -> absent
+
+#7 [B false positive] db=flight_2
+  Q:    How many flights depart from City 'Aberdeen' and have destination City 'Ashley'?
+  GOLD: SELECT count(*) FROM FLIGHTS AS T1 JOIN AIRPORTS AS T2 ON T1.DestAirport = T2.AirportCode JOIN AIRPORTS AS T3 ON T1.SourceAirport = T3.AirportCode WHERE T2.City = "Ashley" AND T3.City = "Aberdeen"
+  GEN:  SELECT COUNT(*) FROM flights f JOIN airports a_src ON f.SourceAirport = a_src.AirportCode JOIN airports a_dest ON f.DestAirport = a_dest.AirportCode WHERE a_src.City = 'Aberdeen' AND a_dest.City = 'Ashley';
+  gold -> 1 row(s) [(0,)]
+  gen  -> 1 row(s) [(0,)]
+  literals: 'Aberdeen' -> absent; 'Ashley' -> absent
+
+#17 [B false positive] db=flight_2
+  Q:    List the airport code and name in the city of Anthony.
+  GOLD: SELECT AirportCode , AirportName FROM AIRPORTS WHERE city = "Anthony"
+  GEN:  SELECT AirportCode, AirportName FROM airports WHERE City = 'Anthony';
+  gold -> 0 row(s) []
+  gen  -> 0 row(s) []
+  literals: 'Anthony' -> absent
+
+#42 [B false positive] db=flight_2
+  Q:    What are the names of airports in Aberdeen?
+  GOLD: SELECT AirportName FROM AIRPORTS WHERE City = "Aberdeen"
+  GEN:  SELECT AirportName FROM airports WHERE City = 'Aberdeen';
+  gold -> 0 row(s) []
+  gen  -> 0 row(s) []
+  literals: 'Aberdeen' -> absent
+
+#61 [B false positive] db=flight_2
+  Q:    Return the number of flights arriving in Aberdeen.
+  GOLD: SELECT count(*) FROM FLIGHTS AS T1 JOIN AIRPORTS AS T2 ON T1.DestAirport = T2.AirportCode WHERE T2.City = "Aberdeen"
+  GEN:  SELECT COUNT(*) FROM flights WHERE DestAirport IN (SELECT AirportCode FROM airports WHERE City = 'Aberdeen');
+  gold -> 1 row(s) [(0,)]
+  gen  -> 1 row(s) [(0,)]
+  literals: 'Aberdeen' -> absent
+
+#151 [B false positive] db=flight_2
+  Q:    What are airport names at City 'Aberdeen'?
+  GOLD: SELECT AirportName FROM AIRPORTS WHERE City = "Aberdeen"
+  GEN:  SELECT AirportName FROM airports WHERE City = 'Aberdeen';
+  gold -> 0 row(s) []
+  gen  -> 0 row(s) []
+  literals: 'Aberdeen' -> absent
+
+#259 [B false positive] db=flight_2
+  Q:    How many flights fly from Aberdeen to Ashley?
+  GOLD: SELECT count(*) FROM FLIGHTS AS T1 JOIN AIRPORTS AS T2 ON T1.DestAirport = T2.AirportCode JOIN AIRPORTS AS T3 ON T1.SourceAirport = T3.AirportCode WHERE T2.City = "Ashley" AND T3.City = "Aberdeen"
+  GEN:  SELECT COUNT(*) FROM flights f JOIN airports a_src ON f.SourceAirport = a_src.AirportCode JOIN airports a_dest ON f.DestAirport = a_dest.AirportCode WHERE a_src.City = 'Aberdeen' AND a_dest.City = 'Ashley';
+  gold -> 1 row(s) [(0,)]
+  gen  -> 1 row(s) [(0,)]
+  literals: 'Aberdeen' -> absent; 'Ashley' -> absent
+
